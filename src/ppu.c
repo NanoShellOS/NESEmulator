@@ -224,7 +224,8 @@ void execute_ppu(PPU* ppu){
             palette_addr = ppu->palette[palette_addr];
             ppu->screen[ppu->scanlines * VISIBLE_DOTS + ppu->dots - 1] = nes_palette[palette_addr];
         }
-        if(ppu->dots == VISIBLE_DOTS + 1 && ppu->mask & SHOW_BG){
+        // the background pipeline *still* happens even if background rendering is disabled (both BG and SPR must be disabled to stop it)
+        if(ppu->dots == VISIBLE_DOTS + 1 && (ppu->mask & RENDER_ENABLED)){
             if((ppu->v & FINE_Y) != FINE_Y) {
                 // increment coarse x
                 ppu->v += 0x1000;
