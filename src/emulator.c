@@ -50,9 +50,11 @@ void init_emulator(struct Emulator* emulator, int argc, char *argv[]){
     g_ctx->screen_height = -1;
 #endif
 
-    g_ctx->width = 256;
-    g_ctx->height = 240;
-    g_ctx->scale = 2;
+    //g_ctx->width = 256;
+    //g_ctx->height = 240;
+    g_ctx->width = PPU_SCREEN_WIDTH;
+    g_ctx->height = PPU_SCREEN_HEIGHT;
+    g_ctx->scale = 3;
 
 #if NAMETABLE_MODE
     g_ctx->width = 512;

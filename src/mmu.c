@@ -47,6 +47,7 @@ void write_mem(Memory* mem, uint16_t address, uint8_t value){
             case PPU_MASK:
                 ppu->bus = value;
                 ppu->mask = value;
+                ppu->ppuEvents |= PPU_EVENT_MASK_WR;
                 break;
             case PPU_SCROLL:
                 ppu->bus = value;

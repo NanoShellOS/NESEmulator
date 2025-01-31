@@ -5,6 +5,18 @@
 #include "utils.h"
 #include "mapper.h"
 
+//#define ENABLE_EVENT_VIEWER
+#ifdef ENABLE_EVENT_VIEWER
+#define PPU_SCREEN_HEIGHT 260
+#define PPU_SCREEN_WIDTH 340
+#define PPU_SCREEN_LEFT_OFFSET 0
+#else
+#define PPU_SCREEN_HEIGHT 240
+#define PPU_SCREEN_WIDTH 256
+#define PPU_SCREEN_LEFT_OFFSET 1
+#endif
+
+// PPU rendering parameters
 #define VISIBLE_SCANLINES 240
 #define VISIBLE_DOTS 256
 #define NTSC_SCANLINES_PER_FRAME 261
@@ -65,6 +77,13 @@ typedef struct PPU{
 
     struct Emulator* emulator;
     Mapper* mapper;
+
+    // DEBUG event viewer
+#define PPU_EVENT_MASK_WR (1 << 0)
+#define PPU_EVENT_CTRL_WR (1 << 1)
+#define PPU_EVENT_SCRL_WR (1 << 2)
+#define PPU_EVENT_ADDR_WR (1 << 3)
+    uint8_t ppuEvents;
 } PPU;
 
 // ARGB8888 palette

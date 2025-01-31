@@ -17,12 +17,14 @@ void init_ppu(struct Emulator* emulator){
 #if NAMETABLE_MODE
     screen_size = sizeof(uint32_t) * VISIBLE_SCANLINES * VISIBLE_DOTS * 4;
 #else
-    screen_size = sizeof(uint32_t) * VISIBLE_SCANLINES * VISIBLE_DOTS;
+    screen_size = sizeof(uint32_t) * PPU_SCREEN_HEIGHT * PPU_SCREEN_WIDTH;
 #endif
     ppu->screen = malloc(screen_size);
     ppu->emulator = emulator;
     ppu->mapper = &emulator->mapper;
     ppu->scanlines_per_frame = emulator->type == NTSC ? NTSC_SCANLINES_PER_FRAME : PAL_SCANLINES_PER_FRAME;
+
+    ppu->ppuEvents = 0;
 
     memset(ppu->palette, 0, sizeof(ppu->palette));
     memset(ppu->OAM_cache, 0, sizeof(ppu->OAM_cache));
@@ -53,6 +55,7 @@ void exit_ppu(PPU* ppu) {
 }
 
 void set_address(PPU* ppu, uint8_t address){
+    ppu->ppuEvents |= PPU_EVENT_ADDR_WR;
     if(ppu->w){
         // first write
         ppu->t &= 0xff;
@@ -81,6 +84,7 @@ void write_oam(PPU* ppu, uint8_t value){
 }
 
 void set_scroll(PPU* ppu, uint8_t coord){
+    ppu->ppuEvents |= PPU_EVENT_SCRL_WR;
     if(ppu->w){
         // first write
         ppu->t &= ~X_SCROLL_BITS;
@@ -190,6 +194,7 @@ uint8_t read_status(PPU* ppu){
 }
 
 void set_ctrl(PPU* ppu, uint8_t ctrl){
+    ppu->ppuEvents |= PPU_EVENT_CTRL_WR;
     ppu->ctrl = ctrl;
     // set name table in temp address
     ppu->t &= ~0xc00;
@@ -197,6 +202,10 @@ void set_ctrl(PPU* ppu, uint8_t ctrl){
 }
 
 void execute_ppu(PPU* ppu){
+    if (ppu->scanlines < PPU_SCREEN_HEIGHT && ppu->dots < PPU_SCREEN_WIDTH && ppu->dots >= PPU_SCREEN_LEFT_OFFSET &&
+        (PPU_SCREEN_HEIGHT != VISIBLE_SCANLINES || PPU_SCREEN_WIDTH != VISIBLE_DOTS))
+        ppu->screen[ppu->scanlines * PPU_SCREEN_WIDTH + ppu->dots - PPU_SCREEN_LEFT_OFFSET] = 0;
+
     if(ppu->scanlines < VISIBLE_SCANLINES){
         // render scanlines 0 - 239
         if(ppu->dots > 0 && ppu->dots <= VISIBLE_DOTS){
@@ -222,7 +231,7 @@ void execute_ppu(PPU* ppu){
                 palette_addr = palette_addr_sp;
 
             palette_addr = ppu->palette[palette_addr];
-            ppu->screen[ppu->scanlines * VISIBLE_DOTS + ppu->dots - 1] = nes_palette[palette_addr];
+            ppu->screen[ppu->scanlines * PPU_SCREEN_WIDTH + ppu->dots - PPU_SCREEN_LEFT_OFFSET] = nes_palette[palette_addr];
         }
         // the background pipeline *still* happens even if background rendering is disabled (both BG and SPR must be disabled to stop it)
         if(ppu->dots == VISIBLE_DOTS + 1 && (ppu->mask & RENDER_ENABLED)){
@@ -312,6 +321,29 @@ void execute_ppu(PPU* ppu){
             ppu->frames++;
         }
     }
+
+#ifdef ENABLE_EVENT_VIEWER
+    // view events
+    if (ppu->ppuEvents)
+    {
+        static const uint32_t colors[] = {
+            0x0080FF, // Orange - PPUMASK Write
+            0xFF00FF, // Magenta - PPUCTRL Write
+            0x00FF00, // Green - PPUSCROLL Write
+            0xFFFF00, // Cyan - PPUADDR Write
+            //0xFF0000, // Red
+            //0xFFFF00, // Yellow
+            //0x8080FF  // Pale Blue
+        };
+        int index = 0;
+        while (ppu->ppuEvents >>= 1) {
+            index++;
+        }
+
+        if (ppu->scanlines < PPU_SCREEN_HEIGHT && ppu->dots < PPU_SCREEN_WIDTH && ppu->dots >= PPU_SCREEN_LEFT_OFFSET)
+            ppu->screen[ppu->scanlines * PPU_SCREEN_WIDTH + ppu->dots - PPU_SCREEN_LEFT_OFFSET] = colors[index];
+    }
+#endif
 
     // increment dots and scanlines
 
