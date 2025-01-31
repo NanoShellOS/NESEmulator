@@ -8,6 +8,38 @@
 #define PULSE_LUT_SIZE 31
 #define AUDIO_TO_FILE 0
 
+// TODO: Implement APU
+#ifdef DISABLE_APU
+
+void init_APU(UNUSED struct Emulator* emulator) {}
+void reset_APU(UNUSED APU *apu) {}
+void exit_APU() {}
+void execute_apu(UNUSED APU* apu) {}
+void set_status(UNUSED APU* apu, UNUSED uint8_t value) {}
+float get_sample(UNUSED APU* apu) { return 0.0f; }
+void queue_audio(UNUSED APU* apu, UNUSED struct GraphicsContext* ctx) {}
+uint8_t read_apu_status(UNUSED APU* apu) { return 0; }
+void set_frame_counter_ctrl(UNUSED APU* apu, UNUSED uint8_t value) {}
+
+void set_pulse_ctrl(UNUSED Pulse* pulse, UNUSED uint8_t value) {}
+void set_pulse_timer(UNUSED Pulse* pulse, UNUSED uint8_t value) {}
+void set_pulse_sweep(UNUSED Pulse* pulse, UNUSED uint8_t value) {}
+void set_pulse_length_counter(UNUSED Pulse* pulse, UNUSED uint8_t value) {}
+
+void set_tri_counter(UNUSED Triangle* triangle, UNUSED uint8_t value) {}
+void set_tri_timer_low(UNUSED Triangle* triangle, UNUSED uint8_t value) {}
+void set_tri_length(UNUSED Triangle* triangle, UNUSED uint8_t value) {}
+
+void set_noise_ctrl(UNUSED Noise* noise, UNUSED uint8_t value) {}
+void set_noise_period(UNUSED APU* apu, UNUSED uint8_t value) {}
+void set_noise_length(UNUSED Noise* noise, UNUSED uint8_t value) {}
+
+void set_dmc_ctrl(UNUSED APU* apu, UNUSED uint8_t value) {}
+void set_dmc_da(UNUSED DMC* dmc, UNUSED uint8_t value) {}
+void set_dmc_addr(UNUSED DMC* dmc, UNUSED uint8_t value) {}
+void set_dmc_length(UNUSED DMC* dmc, UNUSED uint8_t value) {}
+
+#else
 
 static const uint8_t length_counter_lookup[32] = {
     // HI/LO 0   1   2   3   4   5   6   7    8   9   A   B   C   D   E   F
@@ -130,6 +162,10 @@ void init_APU(struct Emulator *emulator) {
     apu->reset_sequencer = 0;
     apu->audio_start = 0;
     apu->IRQ_inhibit = 0;
+
+    // IPROGRAM: init reload flags
+    apu->pulse1.sweepReloadFlag = 0;
+    apu->pulse2.sweepReloadFlag = 0;
 
     // For keeping track of queue_size statistics for use by the adaptive sampler
     memset(apu->stat_window, 0, sizeof(apu->stat_window));
@@ -552,11 +588,12 @@ void set_pulse_sweep(Pulse *pulse, uint8_t value) {
     pulse->sweep.counter = pulse->sweep.period;
     pulse->shift = value & PULSE_SHIFT;
     pulse->neg = value & BIT_3;
+    pulse->sweepReloadFlag = 1;
     update_target_period(pulse);
 }
 
 void set_pulse_length_counter(Pulse *pulse, uint8_t value) {
-    pulse->t.period = pulse->t.period & 0xff | (value & 0x7) << 8;
+    pulse->t.period = pulse->t.period & 0xff | ((int)(value & 0x7) << 8);
     if (pulse->enabled)
         pulse->l = length_counter_lookup[value >> 3];
     update_target_period(pulse);
@@ -573,7 +610,7 @@ void set_tri_timer_low(Triangle *triangle, uint8_t value) {
 }
 
 void set_tri_length(Triangle *triangle, uint8_t value) {
-    triangle->sequencer.period = triangle->sequencer.period & 0xff | (value & 0x7) << 8;
+    triangle->sequencer.period = triangle->sequencer.period & 0xff | ((int)(value & 0x7) << 8);
     triangle->linear_reload_flag = 1;
     if (triangle->enabled)
         triangle->length_counter = length_counter_lookup[value >> 3];
@@ -779,6 +816,11 @@ static void update_target_period(Pulse* pulse) {
 }
 
 static void length_sweep_pulse(Pulse *pulse) {
+    if (pulse->sweepReloadFlag) {
+        pulse->sweep.counter = 0;
+        pulse->sweepReloadFlag = 0;
+    }
+
     if(clock_divider(&pulse->sweep)) {
         if(pulse->enable_sweep && pulse->shift > 0 && !pulse->mute) {
             pulse->t.period = pulse->target_period;
@@ -790,3 +832,5 @@ static void length_sweep_pulse(Pulse *pulse) {
     if (pulse->l && !pulse->envelope.loop)
         pulse->l--;
 }
+
+#endif

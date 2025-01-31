@@ -1,5 +1,14 @@
 # pragma once
 
+#ifdef DISABLE_APU
+
+typedef struct {
+	int dummy;
+}
+Biquad;
+
+#else
+
 /* this holds the data required to update samples thru a filter */
 typedef struct {
     double a0, a1, a2, a3, a4;
@@ -24,3 +33,5 @@ void biquad_init(Biquad* b, int type,
                    double freq, /* center frequency */
                    double srate, /* sampling rate */
                    double bandwidth); /* bandwidth in octaves */
+
+#endif

@@ -1,3 +1,4 @@
+#include <nanoshell/nanoshell.h>
 #include "controller.h"
 #include "gamepad.h"
 #include "touchpad.h"
@@ -27,42 +28,51 @@ void write_joypad(struct JoyPad* joyPad, uint8_t data){
         joyPad->index = 0;
 }
 
-void keyboard_mapper(struct JoyPad* joyPad, SDL_Event* event){
+void keyboard_mapper(struct JoyPad* joyPad, int eventType, long parm1, UNUSED long parm2) {
+	if (eventType != EVENT_KEYRAW)
+		return;
+	
+	int isRelease = parm1 & 0x80; // whether it's pressed or released
+	int code = parm1 & 0x7F; // the key code
+	
     uint16_t key = 0;
-    switch (event->key.keysym.sym) {
-        case SDLK_RIGHT:
+    switch (code) {
+        case KEY_ARROW_RIGHT:
             key = RIGHT;
             break;
-        case SDLK_LEFT:
+        case KEY_ARROW_LEFT:
             key = LEFT;
             break;
-        case SDLK_DOWN:
+        case KEY_ARROW_DOWN:
             key = DOWN;
             break;
-        case SDLK_UP:
+        case KEY_ARROW_UP:
             key = UP;
             break;
-        case SDLK_RETURN:
+        case KEY_ENTER:
             key = START;
             break;
-        case SDLK_RSHIFT:
+        case KEY_LSHIFT:
+        case KEY_Z:
             key = SELECT;
             break;
-        case SDLK_j:
+        case KEY_C:
             key = BUTTON_A;
             break;
-        case SDLK_k:
+        case KEY_X:
             key = BUTTON_B;
             break;
-        case SDLK_l:
+        case KEY_Q:
             key = TURBO_B;
             break;
-        case SDLK_h:
+        case KEY_W:
             key = TURBO_A;
             break;
-
     }
-    if(event->type == SDL_KEYUP) {
+	
+	if (!key) return;
+	
+    if(isRelease) {
         joyPad->status &= ~key;
         if(key == TURBO_A) {
             // clear button A
@@ -72,7 +82,7 @@ void keyboard_mapper(struct JoyPad* joyPad, SDL_Event* event){
             // clear button B
             joyPad->status &= ~BUTTON_B;
         }
-    } else if(event->type == SDL_KEYDOWN) {
+    } else {
         joyPad->status |= key;
         if(key == TURBO_A) {
             // set button A
@@ -85,13 +95,10 @@ void keyboard_mapper(struct JoyPad* joyPad, SDL_Event* event){
     }
 }
 
-void update_joypad(struct JoyPad* joyPad, SDL_Event* event){
-#ifdef __ANDROID__
-    ANDROID_TOUCHPAD_MAPPER(joyPad, event);
-#else
-    keyboard_mapper(joyPad, event);
-    gamepad_mapper(joyPad, event);
-#endif
+//void update_joypad(struct JoyPad* joyPad, SDL_Event* event){
+void update_joypad(struct JoyPad* joyPad, int eventType, long parm1, long parm2){
+    keyboard_mapper(joyPad, eventType, parm1, parm2);
+    //gamepad_mapper(joyPad, eventType, parm1, parm2);
 }
 
 void turbo_trigger(struct JoyPad* joyPad){

@@ -47,6 +47,8 @@ typedef struct {
     uint8_t enabled;
     uint8_t mute;
     uint16_t target_period;
+    // IPROGRAM
+    uint8_t sweepReloadFlag;
 } Pulse;
 
 

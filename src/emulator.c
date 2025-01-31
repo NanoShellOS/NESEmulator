@@ -1,4 +1,4 @@
-#include <SDL.h>
+#include <nanoshell/nanoshell.h>
 
 #include "emulator.h"
 #include "gamepad.h"
@@ -64,21 +64,113 @@ void init_emulator(struct Emulator* emulator, int argc, char *argv[]){
     }
     LOG(DEBUG, "RENDERING IN NAMETABLE MODE");
 #endif
-    get_graphics_context(g_ctx);
-    SDL_SetWindowTitle(g_ctx->window, get_file_name(argv[1]));
+    get_graphics_context(g_ctx, emulator);
+    SetWindowTitle(g_ctx->window, get_file_name(argv[1]));
 
     init_mem(emulator);
     init_ppu(emulator);
     init_cpu(emulator);
     init_APU(emulator);
-    init_timer(&emulator->timer, PERIOD);
+    //init_timer(&emulator->timer, PERIOD);
     ANDROID_INIT_TOUCH_PAD(g_ctx);
-    init_pads();
+    //init_pads();
 
     emulator->exit = 0;
     emulator->pause = 0;
+	
+	emulator->frameCounter = 0;
+	emulator->nextUpdate = GetTickCount();
 }
 
+void do_keyboard_input(struct Emulator* emulator, int eventType, long parm1, long parm2)
+{
+	struct JoyPad* joy1 = &emulator->mem.joy1;
+    struct JoyPad* joy2 = &emulator->mem.joy2;
+	
+	update_joypad(joy1, eventType, parm1, parm2);
+	update_joypad(joy2, eventType, parm1, parm2);
+}
+
+void run_one_frame(struct Emulator* emulator)
+{
+	// check if we need to update
+	if (GetTickCount() >= emulator->nextUpdate)
+	{
+		if (GetTickCount() - emulator->nextUpdate >= 1000) {
+			LOG(DEBUG, "Severely lagging behind!");
+			emulator->nextUpdate = GetTickCount();
+		}
+		
+		if (emulator->type == NTSC)
+		{
+			emulator->nextUpdate += 16;
+			emulator->frameCounter++;
+			if (emulator->frameCounter % 3 != 0)
+				emulator->nextUpdate++; // to get 16.6 ms on average
+		}
+		else // PAL
+		{
+			emulator->nextUpdate += 20;
+		}
+	}
+	else return;
+    
+	struct JoyPad* joy1 = &emulator->mem.joy1;
+    struct JoyPad* joy2 = &emulator->mem.joy2;
+    struct PPU* ppu = &emulator->ppu;
+    struct c6502* cpu = &emulator->cpu;
+    struct APU* apu = &emulator->apu;
+    struct GraphicsContext* g_ctx = &emulator->g_ctx;
+	
+	// If select and start are both pressed at the same time:
+	if((joy1->status & 0xc) == 0xc || (joy2->status & 0xc) == 0xc) {
+		reset_emulator(emulator);
+	}
+	
+	// trigger turbo events
+	if(ppu->frames % TURBO_SKIP == 0) {
+		turbo_trigger(joy1);
+		turbo_trigger(joy2);
+	}
+	
+	if (emulator->pause)
+		return;
+	
+	// if ppu.render is set, a frame is complete.
+	if (emulator->type == NTSC)
+	{
+		while (!ppu->render) {
+			execute_ppu(ppu);
+			execute_ppu(ppu);
+			execute_ppu(ppu);
+			execute(cpu);
+		#ifndef DISABLE_APU
+			execute_apu(apu);
+		#endif
+		}
+	}
+	else // PAL
+	{
+		uint8_t check = 0;
+		while (!ppu->render) {
+			execute_ppu(ppu);
+			execute_ppu(ppu);
+			execute_ppu(ppu);
+			check++;
+			if(check == 5) {
+				// on the fifth run execute an extra ppu clock
+				// this produces 3.2 scanlines per cpu clock
+				execute_ppu(ppu);
+				check = 0;
+			}
+			execute(cpu);
+			execute_apu(apu);
+		}
+	}
+	
+	render_graphics(g_ctx, ppu->screen);
+	ppu->render = 0;
+}
 
 void run_emulator(struct Emulator* emulator){
     if(emulator->mapper.is_nsf) {
@@ -86,17 +178,27 @@ void run_emulator(struct Emulator* emulator){
         return;
     }
 
-    struct JoyPad* joy1 = &emulator->mem.joy1;
-    struct JoyPad* joy2 = &emulator->mem.joy2;
-    struct PPU* ppu = &emulator->ppu;
-    struct c6502* cpu = &emulator->cpu;
-    struct APU* apu = &emulator->apu;
+    //struct JoyPad* joy1 = &emulator->mem.joy1;
+    //struct JoyPad* joy2 = &emulator->mem.joy2;
+    //struct PPU* ppu = &emulator->ppu;
+    //struct c6502* cpu = &emulator->cpu;
+    //struct APU* apu = &emulator->apu;
     struct GraphicsContext* g_ctx = &emulator->g_ctx;
-    struct Timer* timer = &emulator->timer;
-    SDL_Event e;
-    Timer frame_timer;
-    init_timer(&frame_timer, PERIOD);
-    mark_start(&frame_timer);
+    //struct Timer* timer = &emulator->timer;
+    //SDL_Event e;
+    //Timer frame_timer;
+    //init_timer(&frame_timer, PERIOD);
+    //mark_start(&frame_timer);
+
+	while (HandleMessages(g_ctx->window))
+	{
+		if (emulator->exit)
+			DestroyWindow(g_ctx->window);
+	}
+	
+	emulator->exit = 1;
+
+#if 0 // kept for reference only
 
     while (!emulator->exit) {
 #if PROFILE
@@ -187,9 +289,11 @@ void run_emulator(struct Emulator* emulator){
         }
     }
 
-    mark_end(&frame_timer);
-    emulator->time_diff = get_diff_ms(&frame_timer);
-    release_timer(&frame_timer);
+#endif
+
+    //mark_end(&frame_timer);
+    //emulator->time_diff = get_diff_ms(&frame_timer);
+    //release_timer(&frame_timer);
 }
 
 void reset_emulator(Emulator* emulator) {
@@ -202,7 +306,10 @@ void reset_emulator(Emulator* emulator) {
     }
 }
 
-void run_NSF_player(struct Emulator* emulator) {
+void run_NSF_player(UNUSED struct Emulator* emulator) {
+	
+#ifdef ENABLE_NSF_PLAYER // TODO
+
     LOG(INFO, "Starting NSF player...");
     JoyPad* joy1 = &emulator->mem.joy1;
     JoyPad* joy2 = &emulator->mem.joy2;
@@ -337,6 +444,9 @@ void run_NSF_player(struct Emulator* emulator) {
     mark_end(&frame_timer);
     emulator->time_diff = get_diff_ms(&frame_timer);
     release_timer(&frame_timer);
+	
+#endif
+	
 }
 
 
@@ -347,6 +457,6 @@ void free_emulator(struct Emulator* emulator){
     free_mapper(&emulator->mapper);
     ANDROID_FREE_TOUCH_PAD();
     free_graphics(&emulator->g_ctx);
-    release_timer(&emulator->timer);
+    //release_timer(&emulator->timer);
     LOG(DEBUG, "Emulator session successfully terminated");
 }

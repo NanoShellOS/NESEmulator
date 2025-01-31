@@ -1,5 +1,7 @@
 #include "timers.h"
 
+#if 0
+
 #define G 1000000000L
 #define M 1000000L
 
@@ -184,3 +186,5 @@ static inline void timespec_diff(struct timespec *a, struct timespec *b, struct 
 }
 
 #endif // linux
+
+#endif

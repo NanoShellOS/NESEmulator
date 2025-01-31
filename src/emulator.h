@@ -36,6 +36,9 @@ typedef struct Emulator{
 
     double time_diff;
 
+	int frameCounter;
+	int nextUpdate;
+
     uint8_t exit;
     uint8_t pause;
 } Emulator;

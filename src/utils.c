@@ -1,9 +1,10 @@
 #include "utils.h"
+#include <stdlib.h>
 #include <stdarg.h>
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
-#include <SDL.h>
+//#include <SDL.h>
 #include <string.h>
 
 #ifndef PI
@@ -71,109 +72,13 @@ void LOG(enum LogLevel logLevel, const char* fmt, ...){
     }
 }
 
-int SDL_RenderDrawCircle(SDL_Renderer * renderer, int x, int y, int radius){
-    int offsetx, offsety, d;
-    int status;
-
-    offsetx = 0;
-    offsety = radius;
-    d = radius -1;
-    status = 0;
-
-    while (offsety >= offsetx) {
-        status += SDL_RenderDrawPoint(renderer, x + offsetx, y + offsety);
-        status += SDL_RenderDrawPoint(renderer, x + offsety, y + offsetx);
-        status += SDL_RenderDrawPoint(renderer, x - offsetx, y + offsety);
-        status += SDL_RenderDrawPoint(renderer, x - offsety, y + offsetx);
-        status += SDL_RenderDrawPoint(renderer, x + offsetx, y - offsety);
-        status += SDL_RenderDrawPoint(renderer, x + offsety, y - offsetx);
-        status += SDL_RenderDrawPoint(renderer, x - offsetx, y - offsety);
-        status += SDL_RenderDrawPoint(renderer, x - offsety, y - offsetx);
-
-        if (status < 0) {
-            status = -1;
-            break;
-        }
-
-        if (d >= 2*offsetx) {
-            d -= 2*offsetx + 1;
-            offsetx +=1;
-        }
-        else if (d < 2 * (radius - offsety)) {
-            d += 2 * offsety - 1;
-            offsety -= 1;
-        }
-        else {
-            d += 2 * (offsety - offsetx - 1);
-            offsety -= 1;
-            offsetx += 1;
-        }
-    }
-
-    return status;
-}
-
-
-int SDL_RenderFillCircle(SDL_Renderer * renderer, int x, int y, int radius) {
-    int offsetx, offsety, d;
-    int status;
-
-    offsetx = 0;
-    offsety = radius;
-    d = radius - 1;
-    status = 0;
-
-    while (offsety >= offsetx) {
-
-        status += SDL_RenderDrawLine(renderer, x - offsety, y + offsetx,
-                                     x + offsety, y + offsetx);
-        status += SDL_RenderDrawLine(renderer, x - offsetx, y + offsety,
-                                     x + offsetx, y + offsety);
-        status += SDL_RenderDrawLine(renderer, x - offsetx, y - offsety,
-                                     x + offsetx, y - offsety);
-        status += SDL_RenderDrawLine(renderer, x - offsety, y - offsetx,
-                                     x + offsety, y - offsetx);
-
-        if (status < 0) {
-            status = -1;
-            break;
-        }
-
-        if (d >= 2 * offsetx) {
-            d -= 2 * offsetx + 1;
-            offsetx += 1;
-        } else if (d < 2 * (radius - offsety)) {
-            d += 2 * offsety - 1;
-            offsety -= 1;
-        } else {
-            d += 2 * (offsety - offsetx - 1);
-            offsety -= 1;
-            offsetx += 1;
-        }
-    }
-
-    return status;
-}
-
-
-void to_pixel_format(const uint32_t* restrict in, uint32_t* restrict out, size_t size, uint32_t format){
-    for(int i = 0; i < size; i++) {
-        switch (format) {
-            case SDL_PIXELFORMAT_ARGB8888:{
-                out[i] = in[i];
-                break;
-            }
-            case SDL_PIXELFORMAT_ABGR8888:{
-                out[i] = (in[i] & 0xff000000) | ((in[i] << 16) & 0x00ff0000) | (in[i] & 0x0000ff00) | ((in[i] >> 16) & 0x000000ff);
-                break;
-            }
-            default:
-                LOG(DEBUG, "Unsupported format");
-                quit(EXIT_FAILURE);
-        }
+void to_pixel_format_(const uint32_t* restrict in, uint32_t* restrict out, size_t size){
+    for(size_t i = 0; i < size; i++) {
+        out[i] = in[i];
     }
 }
 
+#if 0
 void fft(complx *v, int n, complx *tmp) {
     if(n <= 1)
         return;
@@ -199,6 +104,7 @@ void fft(complx *v, int n, complx *tmp) {
         v[m + n / 2].Im = ve[m].Im - z.Im;
     }
 }
+#endif
 
 char *get_file_name(char *path) {
     char *pfile = path + strlen(path);
@@ -212,7 +118,7 @@ char *get_file_name(char *path) {
 }
 
 uint64_t next_power_of_2(uint64_t num) {
-    int64_t power = 1;
+    uint64_t power = 1;
     while(power < num)
         power*=2;
     return power;

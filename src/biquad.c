@@ -30,6 +30,7 @@ http://www.smartelectronix.com/musicdsp/text/filters005.txt
 #define M_PI		3.14159265358979323846
 #endif
 
+#ifndef DISABLE_APU
 
 /* Below this would be biquad.c */
 /* Computes a BiQuad filter on a sample */
@@ -139,3 +140,5 @@ double srate, double bandwidth)
     b->x1 = b->x2 = 0;
     b->y1 = b->y2 = 0;
 }
+
+#endif

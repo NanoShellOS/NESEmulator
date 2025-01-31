@@ -17,3 +17,16 @@ int main(int argc, char *argv[]){
 
     return 0;
 }
+/*
+int main() {
+    char* s1 = "nes";
+    //char* s2 = "C:\\Users\\iProgramInCpp\\NES Tools\\FamiStudio421-WinPortableExe\\mysongs\\ch1.nsf";
+    //char* s2 = "C:\\Users\\iProgramInCpp\\NES Tools\\FamiStudio421-WinPortableExe\\mysongs\\ch2.nsf";
+    //char* s2 = "C:\\Work\\celestenes\\celeste.nes";
+    char* s2 = "C:\\Users\\iProgramInCpp\\Downloads\\famidash.nes2\\famidash.nes";
+    
+    char* tbl[] = { s1, s2, NULL };
+
+    return main2(2, tbl);
+}
+*/

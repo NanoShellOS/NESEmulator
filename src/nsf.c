@@ -6,6 +6,20 @@
 #include "touchpad.h"
 #endif
 
+#ifndef ENABLE_NSF_PLAYER
+
+void load_nsf(UNUSED SDL_RWops* file, UNUSED Mapper* mapper) {}
+void load_nsfe(UNUSED SDL_RWops* file, UNUSED Mapper* mapper) {}
+void free_NSF(UNUSED NSF* nsf) {}
+void next_song(UNUSED struct Emulator* emulator, UNUSED NSF* nsf) {}
+void prev_song(UNUSED struct Emulator* emulator, UNUSED NSF* nsf) {}
+void init_song(UNUSED struct Emulator* emulator, UNUSED size_t song_number) {}
+void nsf_jsr(UNUSED struct Emulator* emulator, UNUSED uint16_t address) {}
+void init_NSF_gfx(UNUSED GraphicsContext* g_ctx, UNUSED NSF* nsf) {}
+void render_NSF_graphics(UNUSED struct Emulator* emulator, UNUSED NSF* nsf) {}
+
+#else
+
 #include <float.h>
 #include <stdlib.h>
 #include <string.h>
@@ -758,3 +772,5 @@ void free_NSF(NSF* nsf) {
     }
     free(nsf);
 }
+
+#endif // ENABLE_NSF_PLAYER

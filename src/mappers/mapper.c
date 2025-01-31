@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include <SDL_rwops.h>
+#include "fake_SDL_rwops.h"
 
 #include "mapper.h"
 #include "emulator.h"
@@ -106,7 +106,7 @@ void set_mirroring(Mapper* mapper, Mirroring mirroring){
     mapper->mirroring = mirroring;
 }
 
-static void on_scanline(Mapper* mapper) {
+static void on_scanline(UNUSED Mapper* mapper) {
 
 }
 
@@ -156,7 +156,7 @@ static uint8_t read_PRG(Mapper* mapper, uint16_t address){
 }
 
 
-static void write_PRG(Mapper* mapper, uint16_t address, uint8_t value){
+static void write_PRG(UNUSED Mapper* mapper, UNUSED uint16_t address, UNUSED uint8_t value){
     LOG(DEBUG, "Attempted to write to PRG-ROM");
 }
 
@@ -166,7 +166,7 @@ static uint8_t read_CHR(Mapper* mapper, uint16_t address){
 }
 
 
-static void write_CHR(Mapper* mapper, uint16_t address, uint8_t value){
+static void write_CHR(UNUSED Mapper* mapper, uint16_t address, uint8_t value){
     if(!mapper->CHR_RAM_size){
         LOG(DEBUG, "Attempted to write to CHR-ROM");
         return;
@@ -190,21 +190,21 @@ void load_file(char* file_name, char* game_genie, Mapper* mapper){
     uint8_t header[INES_HEADER_SIZE];
     SDL_RWread(file, header, INES_HEADER_SIZE, 1);
 
-    if(strncmp(header, "NESM\x1A", 5) == 0){
+    if(strncmp((const char*) header, "NESM\x1A", 5) == 0){
         LOG(INFO, "Using NSF format");
         load_nsf(file, mapper);
         SDL_RWclose(file);
         return;
     }
 
-    if(strncmp(header, "NSFE", 4) == 0){
+    if(strncmp((const char*) header, "NSFE", 4) == 0){
         LOG(INFO, "Using NSFe format");
         load_nsfe(file, mapper);
         SDL_RWclose(file);
         return;
     }
 
-    if(strncmp(header, "NES\x1A", 4) != 0){
+    if(strncmp((const char*) header, "NES\x1A", 4) != 0){
         LOG(ERROR, "unknown file format");
         quit(EXIT_FAILURE);
     }

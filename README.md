@@ -1,4 +1,25 @@
-# An NES emulator written in pure C
+# NES Emulator for NanoShell
+
+This is iProgramInCpp's port of https://github.com/ObaraEmmanuel/NES.
+There is no affiliation with Emmanuel, I just thought his project was portable
+enough to my own OS.
+
+## Changes
+
+The source code was changed to use NanoShell's native APIs instead of SDL.
+
+The APU and NSF player are disabled for now.
+
+## License
+
+The content of this repository is licensed under the [MIT license](LICENSE).
+
+## Original readme
+
+See the original readme below:
+
+<hr>
+## An NES emulator written in pure C
 
 Here lies an NES emulator I wrote to learn about emulation and generally
 sharpen my understanding of the C language. Don't let this fool you though.

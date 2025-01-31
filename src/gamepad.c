@@ -1,3 +1,4 @@
+#if 0
 #include <SDL.h>
 
 #include "gamepad.h"
@@ -147,3 +148,5 @@ static int pad_index(GamePad* pad){
     }
     return -1;
 }
+#endif
+

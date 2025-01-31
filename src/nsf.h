@@ -4,8 +4,8 @@
 #include "mapper.h"
 #include "apu.h"
 #include "utils.h"
-#include <SDL_rwops.h>
-#include <SDL.h>
+#include "fake_SDL_rwops.h"
+//#include <SDL.h>
 
 #define NSF_HEADER_SIZE 0x80
 #define TEXT_FIELD_SIZE 32
@@ -44,7 +44,7 @@ typedef struct NSF {
     uint8_t bank_init[8];
     uint8_t initializing;
     size_t prg_size;
-
+/*
     SDL_Texture* song_info_tx;
     SDL_Rect song_info_rect;
     SDL_Texture* song_num_tx;
@@ -53,6 +53,7 @@ typedef struct NSF {
     SDL_Rect song_dur_rect;
     SDL_Texture* song_dur_max_tx;
     SDL_Rect song_dur_max_rect;
+*/
     complx samples[AUDIO_BUFF_SIZE];
     complx temp[AUDIO_BUFF_SIZE];
 } NSF;

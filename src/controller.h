@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include <SDL.h>
+//#include <SDL.h>
 
 typedef enum KeyPad{
     TURBO_B     = 1 << 9,
@@ -27,6 +27,9 @@ typedef struct JoyPad{
 void init_joypad(struct JoyPad* joyPad, uint8_t player);
 uint8_t read_joypad(struct JoyPad* joyPad);
 void write_joypad(struct JoyPad* joyPad, uint8_t data);
-void update_joypad(struct JoyPad* joyPad, SDL_Event* event);
+//void update_joypad(struct JoyPad* joyPad, SDL_Event* event);
 void turbo_trigger(struct JoyPad* joyPad);
-void keyboard_mapper(struct JoyPad* joyPad, SDL_Event* event);
+//void keyboard_mapper(struct JoyPad* joyPad, SDL_Event* event);
+
+void update_joypad(struct JoyPad* joyPad, int eventType, long parm1, long parm2);
+void keyboard_mapper(struct JoyPad* joyPad, int eventType, long parm1, long parm2);
