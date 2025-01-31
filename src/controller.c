@@ -46,18 +46,19 @@ void keyboard_mapper(struct JoyPad* joyPad, SDL_Event* event){
             key = START;
             break;
         case SDLK_RSHIFT:
+        case SDLK_z:
             key = SELECT;
             break;
-        case SDLK_j:
+        case SDLK_c:
             key = BUTTON_A;
             break;
-        case SDLK_k:
+        case SDLK_x:
             key = BUTTON_B;
             break;
-        case SDLK_l:
+        case SDLK_q:
             key = TURBO_B;
             break;
-        case SDLK_h:
+        case SDLK_w:
             key = TURBO_A;
             break;
 
