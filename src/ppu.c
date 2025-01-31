@@ -227,7 +227,7 @@ void execute_ppu(PPU* ppu){
             palette_addr = ppu->palette[palette_addr];
             ppu->screen[ppu->scanlines * VISIBLE_DOTS + ppu->dots - 1] = nes_palette[palette_addr];
         }
-        if(ppu->dots == VISIBLE_DOTS + 1 && ppu->mask & RENDER_ENABLED){
+        if(ppu->dots == VISIBLE_DOTS + 1 && (ppu->mask & RENDER_ENABLED)){
             if((ppu->v & FINE_Y) != FINE_Y) {
                 // increment coarse x
                 ppu->v += 0x1000;
@@ -255,7 +255,7 @@ void execute_ppu(PPU* ppu){
             ppu->v &= ~HORIZONTAL_BITS;
             ppu->v |= ppu->t & HORIZONTAL_BITS;
         }
-        else if(ppu->dots == VISIBLE_DOTS + 4 && ppu->mask & RENDER_ENABLED) {
+        else if(ppu->dots == VISIBLE_DOTS + 4 && (ppu->mask & RENDER_ENABLED)) {
             ppu->mapper->on_scanline(ppu->mapper);
         }
         else if(ppu->dots == END_DOT && ppu->mask & RENDER_ENABLED){
@@ -296,7 +296,7 @@ void execute_ppu(PPU* ppu){
             ppu->v &= ~HORIZONTAL_BITS;
             ppu->v |= ppu->t & HORIZONTAL_BITS;
         }
-        else if(ppu->dots == VISIBLE_DOTS + 4 && ppu->mask & SHOW_SPRITE && ppu->mask & SHOW_BG) {
+        else if(ppu->dots == VISIBLE_DOTS + 4 && (ppu->mask & RENDER_ENABLED)) {
             ppu->mapper->on_scanline(ppu->mapper);
         }
         else if(ppu->dots > 280 && ppu->dots <= 304 && (ppu->mask & RENDER_ENABLED)){
